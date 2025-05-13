@@ -1,0 +1,17 @@
+opencv-python==4.11.0.86
+matplotlib
+numpy==1.26.4
+pillow==11.2.1
+torch==2.0.1
+torchvision==0.15.2
+tqdm==4.67.1
+PyYAML==6.0.2
+requests==2.32.3
+pandas==2.2.3
+seaborn==0.13.2
+fastapi
+pydantic
+scipy>=1.4.1
+IPython
+python-multipart
+uvicorn[standard]
