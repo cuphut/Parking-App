@@ -1,72 +1,135 @@
 import sqlite3
+from datetime import datetime
 
-def create_plate_db():
-    conn = sqlite3.connect('database/plates.db')
+DB_PATH = "database/parking_app.db"
+
+#Vehicle
+def create_vehicle_db():
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    
-    # Tạo bảng valid_plates với đầy đủ cột
+
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS valid_plates (
+        CREATE TABLE IF NOT EXISTS vehicle_info (
             plate TEXT PRIMARY KEY,
             name TEXT,
-            company TEXT
+            companyName TEXT,
+            companyFloor TEXT,
+            phone TEXT
         )
     ''')
-    
     conn.commit()
     conn.close()
 
-def add_plate_to_db(plate, name, company):
-    conn = sqlite3.connect('database/plates.db')
+def add_vehicle_to_db(plate, name, company_name, company_floor, phone):
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    # Chèn biển số mới vào bảng
-    cursor.execute("INSERT INTO valid_plates (plate, name, company) VALUES (?, ?, ?)", (plate, name, company))
-    
+    cursor.execute('''
+        INSERT OR REPLACE INTO vehicle_info (plate, name, companyName, companyFloor, phone)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (plate, name, company_name, company_floor, phone))
+
     conn.commit()
     conn.close()
 
-def delete_plate(plate):
-    conn = sqlite3.connect('database/plates.db')
+def delete_vehicle_from_db(plate):
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    # Xóa bản ghi có biển số khớp
-    cursor.execute("DELETE FROM valid_plates WHERE plate = ?", (plate,))
-
+    cursor.execute("DELETE FROM vehicle_info WHERE plate = ?", (plate,))
     conn.commit()
     conn.close()
-    print(f"✅ Đã xóa biển số: {plate}")
 
-def get_plate_info(plate):
-    conn = sqlite3.connect('database/plates.db')
+def get_vehicle_info(plate):
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    # Lấy thông tin người và công ty từ biển số
-    cursor.execute("SELECT name, company, plate FROM valid_plates WHERE plate = ?", (plate,))
+    cursor.execute("SELECT * FROM vehicle_info WHERE plate = ?", (plate,))
     result = cursor.fetchone()
-
     conn.close()
     return result
 
-def drop_table():
-    # Kết nối tới cơ sở dữ liệu
-    conn = sqlite3.connect('database/plates.db')
+def view_all_vehicle():
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    
-    # Xoá bảng valid_plates nếu nó tồn tại
-    cursor.execute("DROP TABLE IF EXISTS valid_plates")
-    
-    # Commit và đóng kết nối
+
+    cursor.execute("SELECT * FROM vehicle_info")
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
+
+#Parking
+
+def create_parking_table():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    # Bật hỗ trợ foreign key
+    cursor.execute("PRAGMA foreign_keys = ON")
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS Parking (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            plate TEXT,
+            timeIn TEXT,
+            timeOut TEXT,
+            FOREIGN KEY (plate) REFERENCES vehicle_info(plate)
+                ON DELETE CASCADE
+                ON UPDATE CASCADE
+        )
+    """)
     conn.commit()
     conn.close()
 
-def view_all_plates():
-    conn = sqlite3.connect("database/plates.db")
+def add_parking_entry(plate: str, time_in: str):
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM valid_plates")
-    rows = cursor.fetchall()
+    cursor.execute("PRAGMA foreign_keys = ON")
+
+    # 1. Kiểm tra xem có bản ghi nào chưa có timeOut không
+    cursor.execute(
+        "SELECT id FROM Parking WHERE plate = ? AND timeOut IS NULL",
+        (plate,)
+    )
+    existing_entry = cursor.fetchone()
+
+    if existing_entry:
+        # 2. Nếu có, cập nhật timeOut (xe ra)
+        cursor.execute(
+            "UPDATE Parking SET timeOut = ? WHERE id = ?",
+            (time_in, existing_entry[0])
+        )
+    else:
+        # 3. Nếu không, thêm bản ghi mới (xe vào)
+        cursor.execute(
+            "INSERT INTO Parking (plate, timeIn, timeOut) VALUES (?, ?, NULL)",
+            (plate, time_in)
+        )
+        
+    conn.commit()
     conn.close()
 
-    print("📋 DANH SÁCH BIỂN SỐ TRONG DATABASE:")
-    for row in rows:
-        print(f"Biển số: {row[0]}, Ten: {row[1]}, Ten cong ty: {row[2]}")
+def view_all_parking():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT Parking.plate, Vehicle_Info.name, Vehicle_Info.companyName,
+               Vehicle_Info.companyFloor, Vehicle_Info.phone,
+               Parking.timeIn, Parking.timeOut
+        FROM Parking
+        LEFT JOIN Vehicle_Info ON Parking.plate = Vehicle_Info.plate
+        ORDER BY Parking.timeIn DESC
+    """)
+    results = cursor.fetchall()
+    conn.close()
+    return results
+
+
+def delete_parking_from_db(plate):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute("DELETE FROM Parking WHERE plate = ?", (plate,))
+    conn.commit()
+    conn.close()

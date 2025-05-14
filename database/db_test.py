@@ -1,5 +1,5 @@
 import database
 
-database.create_plate_db()
-#database.add_plate_to_db("59E2-00689", "Nguyễn Văn A", "Công ty ABC")
-
+database.delete_parking_from_db("30A33918")
+result = database.view_all_parking()
+print(result)

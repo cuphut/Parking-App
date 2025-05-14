@@ -55,7 +55,6 @@ def read_plate(yolo_license_plate, im):
                 line_1.append(c)
         for l1 in sorted(line_1, key = lambda x: x[0]):
             license_plate += str(l1[2])
-        license_plate += "-"
         for l2 in sorted(line_2, key = lambda x: x[0]):
             license_plate += str(l2[2])
     else:
