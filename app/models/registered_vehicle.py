@@ -12,8 +12,7 @@ class RegisteredVehicle(Base):
     floor_number = Column(String, nullable=True)
     image_path = Column(Text, nullable=True)
 
-    # Quan hệ One-to-Many với ParkingLot
-    parking_records = relationship("ParkingLot", back_populates="vehicle", cascade="all, delete")
+    parking_lot = relationship("ParkingLot", back_populates="registered_vehicles", cascade="all, delete")
 
     def __repr__(self):
         return f"<Vehicle {self.license_plate}>"

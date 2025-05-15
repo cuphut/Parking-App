@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.api.v1 import auth
+from app.api.v1 import auth, registered_vehicle
 from app.core.config import settings
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -15,8 +15,8 @@ app.add_middleware(
 )
 
 # Gắn các router API vào app
-app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
-# app.include_router(vehicles.router, prefix="/api/v1/vehicles", tags=["vehicles"])
+app.include_router(auth.router)
+app.include_router(registered_vehicle.router)
 # app.include_router(detection.router, prefix="/api/v1/detection", tags=["detection"])
 
 @app.get("/")
