@@ -2,6 +2,10 @@ from sqlalchemy.orm import Session
 from app.models.registered_vehicle import RegisteredVehicle
 from app.schemas.registered_vehicle import VehicleCreate, VehicleResponse
 import re
+from fastapi import UploadFile
+from pathlib import Path
+from datetime import datetime
+import shutil
 
 class VehicleService:
 
@@ -19,7 +23,7 @@ class VehicleService:
         return re.sub(r'[^a-zA-Z0-9]', '', license_plate)
 
     @staticmethod
-    def create_vehicle(db: Session, vehicle: VehicleCreate) -> VehicleResponse:
+    def create_vehicle(db: Session, vehicle: VehicleCreate, image: UploadFile) -> VehicleResponse:
         """
         Tạo một phương tiện mới trong cơ sở dữ liệu.
 
@@ -33,14 +37,47 @@ class VehicleService:
         Raises:
             ValueError: Nếu biển số đã tồn tại
         """
-
+        print('debug')
         clean_plate = VehicleService.clean_license_plate(vehicle.license_plate)
         vehicle.license_plate = clean_plate
 
-        if db.query(RegisteredVehicle).filter(RegisteredVehicle.license_plate == vehicle.license_plate).first():
+        # Kiểm tra license_plate đã tồn tại chưa
+        db_vehicle = db.query(RegisteredVehicle).filter(RegisteredVehicle.license_plate == vehicle.license_plate).first()
+        if db_vehicle:
             raise ValueError("License plate already registered")
+        
+        # Kiểm tra định dạng file hình ảnh
+        allowed_extensions = {'.jpg', '.jpeg', '.png'}
+        file_extension = Path(image.filename).suffix.lower()
+        if file_extension not in allowed_extensions:
+            raise ValueError("Invalid image format. Only JPG, JPEG, PNG are allowed")
 
-        db_vehicle = RegisteredVehicle(**vehicle.dict())
+        # Tạo thư mục lưu trữ nếu chưa tồn tại
+        upload_dir = Path("uploads/vehicles")
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        print(upload_dir)
+
+        # Tạo tên file duy nhất: license_plate + timestamp
+        timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        file_name = f"{vehicle.license_plate}_{timestamp}{file_extension}"
+        file_path = upload_dir / file_name
+
+        # Lưu file hình ảnh
+        with file_path.open("wb") as buffer:
+            shutil.copyfileobj(image.file, buffer)
+
+        # Tạo đường dẫn tương đối để lưu vào database
+        relative_path = f"/uploads/vehicles/{file_name}"
+
+        # Tạo bản ghi phương tiện
+        db_vehicle = RegisteredVehicle(
+            license_plate=vehicle.license_plate,
+            owner_name=vehicle.owner_name,
+            phone_number=vehicle.phone_number,
+            company=vehicle.company,
+            floor_number=vehicle.floor_number,
+            image_path=relative_path
+        )
         db.add(db_vehicle)
         db.commit()
         db.refresh(db_vehicle)
@@ -106,6 +143,9 @@ class VehicleService:
 
         clean_plate = VehicleService.clean_license_plate(license_plate)
         license_plate = clean_plate
+
+        clean_plate = VehicleService.clean_license_plate(vehicle_update.license_plate)
+        vehicle_update.license_plate = clean_plate
 
         db_vehicle = db.query(RegisteredVehicle).filter(RegisteredVehicle.license_plate == license_plate).first()
         if not db_vehicle:

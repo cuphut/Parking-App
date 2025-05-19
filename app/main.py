@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.api.v1 import auth, registered_vehicle
+from app.api.v1 import auth, registered_vehicle, parking_lot
 from app.core.config import settings
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -17,6 +17,7 @@ app.add_middleware(
 # Gắn các router API vào app
 app.include_router(auth.router)
 app.include_router(registered_vehicle.router)
+app.include_router(parking_lot.router)
 # app.include_router(detection.router, prefix="/api/v1/detection", tags=["detection"])
 
 @app.get("/")

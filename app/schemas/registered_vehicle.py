@@ -8,7 +8,7 @@ class VehicleBase(BaseModel):
         description="Biển số xe duy nhất (ví dụ: 29A-12345)",
         example="29A-12345",
         min_length=1,
-        max_length=20
+        max_length=12
     )
     owner_name: str = Field(
         ...,  # Bắt buộc
@@ -16,7 +16,7 @@ class VehicleBase(BaseModel):
         description="Tên của chủ sở hữu phương tiện",
         example="Nguyen Van A",
         min_length=1,
-        max_length=100
+        max_length=50
     )
     phone_number: str = Field(
         ...,  # Bắt buộc
@@ -24,7 +24,7 @@ class VehicleBase(BaseModel):
         description="Số điện thoại của chủ xe (ví dụ: 0123456789)",
         example="0123456789",
         min_length=1,
-        max_length=20
+        max_length=11
     )
     company: Optional[str] = Field(
         None,
@@ -33,23 +33,34 @@ class VehicleBase(BaseModel):
         example="ABC Corp",
         max_length=100
     )
-    floor_number: Optional[str] = Field(
+    floor_number: Optional[int] = Field(
         None,
         title="Số tầng",
-        description="Tầng đậu xe (tùy chọn, ví dụ: F1, B2)",
-        example="F1",
-        max_length=10
+        description="Tầng công ty",
+        example=1,
+        ge=0,
+        le=999
     )
     image_path: Optional[str] = Field(
         None,
         title="Đường dẫn hình ảnh",
-        description="Đường dẫn tới hình ảnh của xe (tùy chọn)",
-        example="/images/vehicle1.jpg",
+        description="Đường dẫn tới hình ảnh của xe",
+        example="/uploads/vehicles/29A-12345_20250515174700.jpg",
         max_length=255
     )
 
-class VehicleCreate(VehicleBase):
-    pass
+class VehicleCreate(BaseModel):
+    license_plate: str = Field(
+        ..., min_length=6, max_length=12
+    )
+    owner_name: str = Field(
+        ..., min_length=1, max_length=50
+    )
+    phone_number: str = Field(
+        ..., min_length=10, max_length=11
+    )
+    company: Optional[str] = Field(None, max_length=100)
+    floor_number: Optional[int] = Field(None, ge=0, le=999)
 
 class VehicleResponse(VehicleBase):
     class Config:

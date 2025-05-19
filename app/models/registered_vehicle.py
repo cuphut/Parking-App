@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text
+from sqlalchemy import Column, String, Text, Integer
 from sqlalchemy.orm import relationship
 from app.db.session import Base
 
@@ -9,7 +9,7 @@ class RegisteredVehicle(Base):
     owner_name = Column(String, nullable=False)
     phone_number = Column(String, nullable=False)
     company = Column(String, nullable=True)
-    floor_number = Column(String, nullable=True)
+    floor_number = Column(Integer, nullable=True)
     image_path = Column(Text, nullable=True)
 
     parking_lot = relationship("ParkingLot", back_populates="registered_vehicles", cascade="all, delete")

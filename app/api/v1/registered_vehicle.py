@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.schemas.registered_vehicle import VehicleCreate, VehicleResponse
@@ -7,7 +7,7 @@ from app.services.registered_vehicle_service import VehicleService
 router = APIRouter(prefix="/registered_vehicle", tags=["registered_vehicle"])
 
 @router.post("/", response_model=VehicleResponse)
-def create_vehicle(vehicle: VehicleCreate, db: Session = Depends(get_db)):
+def create_vehicle(vehicle: VehicleCreate, image: UploadFile = File(...), db: Session = Depends(get_db)):
     """
     Tạo mới một phương tiện.
 
@@ -22,7 +22,7 @@ def create_vehicle(vehicle: VehicleCreate, db: Session = Depends(get_db)):
         HTTPException: Nếu biển số đã tồn tại (status code 400).
     """
     try:
-        return VehicleService.create_vehicle(db, vehicle)
+        return VehicleService.create_vehicle(db, vehicle,image)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
