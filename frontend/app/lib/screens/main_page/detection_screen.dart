@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '/services/detect_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class DetectionScreen extends StatefulWidget {
   const DetectionScreen({super.key});
@@ -87,9 +88,11 @@ class _DetectionScreenState extends State<DetectionScreen> {
             final phone = item['phone'] ?? '';
 
             String cleanPlate = item['plate'].replaceAll('-', '').replaceAll(' ', '');
+            
             final imageName = '${cleanPlate}.jpg'; // hoặc theo logic của bạn
+            final baseUrl = dotenv.env['BASE_URL'] ?? 'http://default-url.com';
             final imageUrl =
-                'http://192.168.100.145:8001/uploads/vehicles/$imageName';
+                '$baseUrl/uploads/vehicles/$imageName';
             return Card(
               margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
               elevation: 4,

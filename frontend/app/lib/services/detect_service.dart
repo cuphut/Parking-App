@@ -2,14 +2,15 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class DetectService {
-  static const String _baseUrl = 'http://192.168.100.145:8001';
 
   Future<String?> uploadImage(File image) async {
     try {
+      final baseUrl = dotenv.env['BASE_URL'] ?? 'http://default-url.com';
       String mimeType = image.path.endsWith('.png') ? 'png' : 'jpeg';
-      var request = http.MultipartRequest('POST', Uri.parse('$_baseUrl/detech-image/'));
+      var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/detech-image/'));
       request.files.add(
         await http.MultipartFile.fromPath(
           'file',

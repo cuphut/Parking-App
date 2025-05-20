@@ -3,9 +3,10 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../models/vehicle_info.dart';
 import 'package:path/path.dart' as path;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class VehicleService {
-  static const String baseUrl = 'http://192.168.100.145:8001';
+  final baseUrl = dotenv.env['BASE_URL'] ?? 'http://default-url.com';
 
   Future<bool> checkVehicleExists(String licensePlate) async {
     String cleanPlate = licensePlate.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
@@ -52,6 +53,7 @@ class VehicleService {
   }
 
   static Future<List<VehicleInfo>> fetchVehicles() async {
+    final baseUrl = dotenv.env['BASE_URL'] ?? 'http://default-url.com';
     final response = await http.get(
       Uri.parse('$baseUrl/registered_vehicle/vehicles'),
     );
@@ -65,6 +67,7 @@ class VehicleService {
   }
 
   static Future<VehicleInfo> fetchVehicleByPlate(String plate) async {
+    final baseUrl = dotenv.env['BASE_URL'] ?? 'http://default-url.com';
     final response = await http.get(
       Uri.parse('$baseUrl/registered_vehicle/$plate'),
     );
@@ -77,6 +80,7 @@ class VehicleService {
   }
 
   static Future<void> deleteVehicleByPlate(String plate) async {
+    final baseUrl = dotenv.env['BASE_URL'] ?? 'http://default-url.com';
     final url = Uri.parse('$baseUrl/registered_vehicle/$plate');
 
     final response = await http.delete(url);

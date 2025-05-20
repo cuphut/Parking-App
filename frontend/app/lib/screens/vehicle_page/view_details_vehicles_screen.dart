@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/vehicle_info.dart';
 import '../../services/vehicle_service.dart';
 import 'edit_vehicle_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class VehicleDetailScreen extends StatefulWidget {
   final String plate;
@@ -60,8 +61,9 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
             }
 
             final vehicle = snapshot.data!;
+            final baseUrl = dotenv.env['BASE_URL'] ?? 'http://default-url.com';
             final imageName = '${vehicle.licensePlate}.jpg';
-            final imageUrl = 'http://192.168.100.145:8001/uploads/vehicles/$imageName';
+            final imageUrl = '$baseUrl/uploads/vehicles/$imageName';
 
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
