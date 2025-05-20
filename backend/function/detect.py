@@ -2,8 +2,8 @@ import cv2
 import torch
 import numpy as np
 from function import helper, utils_rotate
-from database.database import get_vehicle_info
-
+from app.services.registered_vehicle_service import VehicleService
+from app.db.session import SessionLocal
 # Load models chỉ 1 lần
 yolo_LP_detect = torch.hub.load('yolov5', 'custom', path='model/LP_detector.pt', force_reload=True, source='local')
 yolo_license_plate = torch.hub.load('yolov5', 'custom', path='model/LP_ocr.pt', force_reload=True, source='local')
@@ -35,13 +35,12 @@ def detect_license_plates(image_bytes):
     list_plates = results.pandas().xyxy[0].values.tolist()
     list_read_plates = set()
     results_info = []
+    db = SessionLocal()
 
     if not list_plates:
         lp = helper.read_plate(yolo_license_plate, img)
         if lp != "unknown":
-            # Định dạng biển số trước khi thêm vào list_read_plates
-            formatted_lp = format_license_plate(lp)
-            list_read_plates.add(formatted_lp)
+            list_read_plates.add(lp)
     else:
         for plate in list_plates:
             x1, y1, x2, y2 = map(int, plate[:4])
@@ -51,32 +50,31 @@ def detect_license_plates(image_bytes):
                     preprocessed_img = preprocess_image(crop_img)
                     lp = helper.read_plate(yolo_license_plate, utils_rotate.deskew(preprocessed_img, cc, ct))
                     if lp != "unknown":
-                        # Định dạng biển số trước khi thêm vào list_read_plates
-                        formatted_lp = format_license_plate(lp)
-                        list_read_plates.add(formatted_lp)
+                        list_read_plates.add(lp)
                         break
                 else:
                     continue
                 break
 
     for plate in list_read_plates:
-        # Chuyển định dạng biển số về dạng thô để tra cứu
-        info = get_vehicle_info(plate)
-        if info:
-            plate, name, company_name, company_floor, phone = info
+        try:
+            info = VehicleService.get_vehicle_by_license_plate(db, plate)
+            formatted_lp = format_license_plate(plate)
             results_info.append({
-                "plate": plate,  # Giữ định dạng đã format (29-V7 37694)
-                "name": name,
-                "companyName": company_name,
-                "companyFloor": company_floor,
-                "phone": phone,
+                "plate": formatted_lp,
+                "name": info.owner_name,
+                "companyName": info.company,
+                "companyFloor": info.floor_number,
+                "phone": info.phone_number,
                 "valid": True
             })
-        else:
+        except ValueError:
+            formatted_lp = format_license_plate(plate)
             results_info.append({
-                "plate": plate,  # Giữ định dạng đã format
+                "plate": formatted_lp,
                 "message": "Chưa được đăng ký",
                 "valid": False
             })
+
 
     return results_info

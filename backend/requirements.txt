@@ -15,3 +15,7 @@ scipy>=1.4.1
 IPython
 python-multipart
 uvicorn[standard]
+sqlalchemy
+passlib
+pydantic-settings
+psycopg2

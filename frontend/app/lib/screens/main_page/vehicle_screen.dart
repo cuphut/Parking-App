@@ -4,7 +4,7 @@ import '../vehicle_page/add_vehicle_screen.dart';
 import '../vehicle_page/view_vehicle_screen.dart';
 
 class VehicleScreen extends StatelessWidget {
-  final String role;
+  final bool role;
 
   const VehicleScreen({super.key, required this.role});
 
@@ -13,7 +13,7 @@ class VehicleScreen extends StatelessWidget {
     return Scaffold(
       body: ListView(
         children: [
-          if (role.toLowerCase() == 'admin') ...[
+          if (role) ...[
             ListTile(
               leading: const Icon(Icons.add, color: Colors.blue),
               title: const Text('Thêm phương tiện'),

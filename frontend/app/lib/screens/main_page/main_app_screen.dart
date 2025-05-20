@@ -5,13 +5,9 @@ import 'vehicle_screen.dart';
 
 class MainAppScreen extends StatefulWidget {
   final String username;
-  final String role;
+  final bool role;
 
-  const MainAppScreen({
-    super.key,
-    required this.username,
-    required this.role,
-  });
+  const MainAppScreen({super.key, required this.username, required this.role});
 
   @override
   State<MainAppScreen> createState() => _MainAppScreenState();
@@ -34,6 +30,13 @@ class _MainAppScreenState extends State<MainAppScreen> {
     });
   }
 
+  void _clearSearch() {
+    setState(() {
+      _searchController.clear();
+      _isSearchVisible = false;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -52,39 +55,42 @@ class _MainAppScreenState extends State<MainAppScreen> {
 
   @override
   Widget build(BuildContext context) {
+    
     final List<Widget> _screens = [
       const DetectionScreen(),
-      ParkingScreen(searchQuery: _searchQuery),
+      ParkingScreen(searchQuery: _searchQuery, onClearSearch: _clearSearch),
       VehicleScreen(role: widget.role),
     ];
 
     return Scaffold(
       appBar: AppBar(
-        title: _isSearchVisible
-            ? TextField(
-                controller: _searchController,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  hintText: 'Tìm kiếm theo biển số...',
-                  border: InputBorder.none,
-                ),
-              )
-            : Text(_titles[_selectedIndex]),
-        actions: _selectedIndex == 1
-            ? [
-                IconButton(
-                  icon: Icon(_isSearchVisible ? Icons.close : Icons.search),
-                  onPressed: () {
-                    setState(() {
-                      _isSearchVisible = !_isSearchVisible;
-                      if (!_isSearchVisible) {
-                        _searchController.clear();
-                      }
-                    });
-                  },
-                ),
-              ]
-            : null,
+        title:
+            _isSearchVisible
+                ? TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    hintText: 'Tìm kiếm theo biển số...',
+                    border: InputBorder.none,
+                  ),
+                )
+                : Text(_titles[_selectedIndex]),
+        actions:
+            _selectedIndex == 1
+                ? [
+                  IconButton(
+                    icon: Icon(_isSearchVisible ? Icons.close : Icons.search),
+                    onPressed: () {
+                      setState(() {
+                        _isSearchVisible = !_isSearchVisible;
+                        if (!_isSearchVisible) {
+                          _searchController.clear();
+                        }
+                      });
+                    },
+                  ),
+                ]
+                : null,
       ),
       drawer: Drawer(
         shape: const RoundedRectangleBorder(
@@ -105,10 +111,12 @@ class _MainAppScreenState extends State<MainAppScreen> {
                 ),
               ),
               accountEmail: Text(
-                widget.role, // Use role from widget
+                widget.role
+                    ? 'Quản trị viên'
+                    : 'Người dùng', // Use role from widget
                 style: const TextStyle(
                   fontSize: 18,
-                  fontWeight: FontWeight.w700 ,
+                  fontWeight: FontWeight.w700,
                   color: Colors.white70,
                 ),
               ),
@@ -123,7 +131,10 @@ class _MainAppScreenState extends State<MainAppScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text('Đăng xuất', style: TextStyle(color: Colors.red)),
+              title: const Text(
+                'Đăng xuất',
+                style: TextStyle(color: Colors.red),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushReplacementNamed(context, '/login');
@@ -135,9 +146,18 @@ class _MainAppScreenState extends State<MainAppScreen> {
       body: _screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Nhận diện'),
-          BottomNavigationBarItem(icon: Icon(Icons.local_parking), label: 'Bãi đỗ'),
-          BottomNavigationBarItem(icon: Icon(Icons.two_wheeler), label: 'Phương tiện'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.camera_alt),
+            label: 'Nhận diện',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.local_parking),
+            label: 'Bãi đỗ',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.two_wheeler),
+            label: 'Phương tiện',
+          ),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.blue,

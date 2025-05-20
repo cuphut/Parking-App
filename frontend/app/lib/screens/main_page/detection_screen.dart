@@ -45,27 +45,23 @@ class _DetectionScreenState extends State<DetectionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: _isLoading
-            ? const CircularProgressIndicator()
-            : _resultText != null
+        child:
+            _isLoading
+                ? const CircularProgressIndicator()
+                : _resultText != null
                 ? Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: _buildResultWidget(),
-                  )
+                  padding: const EdgeInsets.all(16),
+                  child: _buildResultWidget(),
+                )
                 : const Text('Chọn ảnh để nhận diện biển số xe'),
       ),
       floatingActionButton: RawMaterialButton(
         onPressed: _pickAndUploadImage,
-        fillColor: const Color.fromRGBO(25, 118, 210, 1),
+        fillColor: Colors.blueAccent,
         shape: const CircleBorder(
-          side: BorderSide(
-            color: Color.fromRGBO(25, 118, 210, 1),
-          ),
+          side: BorderSide(color: Colors.blueAccent),
         ),
-        constraints: const BoxConstraints.tightFor(
-          width: 70,
-          height: 70,
-        ),
+        constraints: const BoxConstraints.tightFor(width: 70, height: 70),
         child: const Icon(Icons.camera_alt, size: 36, color: Colors.white),
       ),
     );
@@ -90,18 +86,43 @@ class _DetectionScreenState extends State<DetectionScreen> {
             final companyFloor = item['companyFloor'] ?? '';
             final phone = item['phone'] ?? '';
 
+            String cleanPlate = item['plate'].replaceAll('-', '').replaceAll(' ', '');
+            final imageName = '${cleanPlate}.jpg'; // hoặc theo logic của bạn
+            final imageUrl =
+                'http://192.168.100.145:8001/uploads/vehicles/$imageName';
             return Card(
               margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
               elevation: 4,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              color: valid ? Colors.green : const Color.fromARGB(255, 255, 90, 78), // Màu nền khác nhau cho hợp lệ/không hợp lệ
+              color:
+                  valid
+                      ? Colors.green
+                      : const Color.fromARGB(
+                        255,
+                        255,
+                        90,
+                        78,
+                      ), // Màu nền khác nhau cho hợp lệ/không hợp lệ
               child: Padding(
                 padding: const EdgeInsets.all(18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    if(valid) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          imageUrl,
+                          height: 150,
+                          width: 150,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    )],
                     Text(
                       "Biển số $plate",
                       style: const TextStyle(

@@ -4,12 +4,12 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
 class DetectService {
-  static const String _baseUrl = 'http://192.168.100.145:8000';
+  static const String _baseUrl = 'http://192.168.100.145:8001';
 
   Future<String?> uploadImage(File image) async {
     try {
       String mimeType = image.path.endsWith('.png') ? 'png' : 'jpeg';
-      var request = http.MultipartRequest('POST', Uri.parse('$_baseUrl/upload-image'));
+      var request = http.MultipartRequest('POST', Uri.parse('$_baseUrl/detech-image/'));
       request.files.add(
         await http.MultipartFile.fromPath(
           'file',

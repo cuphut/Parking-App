@@ -32,10 +32,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final user = await LoginService.login(username, password);
-
+      
       // Extract username and role from response
       final String userName = user['username'] ?? 'Unknown';
-      final String userRole = user['role'] ?? 'Unknown';
+      final bool isAdmin = user['role'] ?? true;
 
       // Navigate to MainAppScreen with username and role
       Navigator.pushReplacementNamed(
@@ -43,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
         '/main',
         arguments: {
           'username': userName,
-          'role': userRole,
+          'role': isAdmin,
         },
       );
     } catch (e) {

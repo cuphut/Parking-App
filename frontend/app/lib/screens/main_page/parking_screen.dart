@@ -4,8 +4,9 @@ import 'package:intl/intl.dart';
 
 class ParkingScreen extends StatefulWidget {
   final String searchQuery;
+  final VoidCallback? onClearSearch; // Added callback
 
-  const ParkingScreen({super.key, required this.searchQuery});
+  const ParkingScreen({super.key, required this.searchQuery, this.onClearSearch});  
 
   @override
   State<ParkingScreen> createState() => _ParkingScreenState();
@@ -19,7 +20,7 @@ class _ParkingScreenState extends State<ParkingScreen> {
   String? _errorMessage;
 
   final DateFormat _dateFormat = DateFormat('dd/MM/yyyy HH:mm');
-  
+
   @override
   void initState() {
     super.initState();
@@ -31,6 +32,7 @@ class _ParkingScreenState extends State<ParkingScreen> {
     super.didUpdateWidget(oldWidget);
     if (widget.searchQuery != oldWidget.searchQuery) {
       _filterParkingList();
+      
     }
   }
 
@@ -41,9 +43,10 @@ class _ParkingScreenState extends State<ParkingScreen> {
     });
 
     try {
-      final parkingData = await _parkingService.getAllParking();
+      final parkingData = await _parkingService.getParking();
       setState(() {
         _parkingList = parkingData;
+        widget.onClearSearch?.call();
         _filterParkingList(); // Lọc dựa trên searchQuery
       });
     } catch (e) {
@@ -57,17 +60,28 @@ class _ParkingScreenState extends State<ParkingScreen> {
     }
   }
 
+  String formatLicensePlate(String plate) {
+    if (plate.length < 7) return plate;
+
+    String part1 = plate.substring(0, 2);
+    String part2 = plate.substring(2, 4);
+    String part3 = plate.substring(4);
+
+    return '$part1-$part2 $part3';
+  }
+
   void _filterParkingList() {
     final query = widget.searchQuery.toLowerCase();
     setState(() {
-      _filteredParkingList = _parkingList.where((parking) {
-        final plate = (parking['plate'] ?? '').toLowerCase();
-        final timeOut = parking['timeOut'];
-        final isStillParked = timeOut == null || timeOut.toString().isEmpty;
+      _filteredParkingList =
+          _parkingList.where((parking) {
+            final plate = (parking['license_plate'] ?? '').toLowerCase();
+            final timeOut = parking['exit_time'];
+            final isStillParked = timeOut == null || timeOut.toString().isEmpty;
 
-        final matchesQuery = query.isEmpty || plate.contains(query);
-        return isStillParked && matchesQuery;
-      }).toList();
+            final matchesQuery = query.isEmpty || plate.contains(query);
+            return isStillParked && matchesQuery;
+          }).toList();
     });
   }
 
@@ -82,60 +96,69 @@ class _ParkingScreenState extends State<ParkingScreen> {
     return _isLoading
         ? const Center(child: CircularProgressIndicator())
         : _errorMessage != null
-            ? Center(child: Text(_errorMessage!))
-            : _filteredParkingList.isEmpty
-                ? const Center(child: Text('Không tìm thấy bản ghi nào'))
-                : RefreshIndicator(
-                    onRefresh: _fetchParkingList,
-                    child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _filteredParkingList.length,
-                      itemBuilder: (context, index) {
-                        final parking = _filteredParkingList[index];
-                        final plate = parking['plate'] ?? '';
-                        final name = parking['name'] ?? '';
-                        final companyName = parking['companyName'] ?? '';
-                        final companyFloor = parking['companyFloor'] ?? '';
-                        final phone = parking['phone'] ?? '';
-                        final timeIn = parking['timeIn'] ?? '';
+        ? Center(child: Text(_errorMessage!))
+        : _filteredParkingList.isEmpty
+        ? const Center(child: Text('Không tìm thấy bản ghi nào'))
+        : RefreshIndicator(
+          onRefresh: _fetchParkingList,
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: _filteredParkingList.length,
+            itemBuilder: (context, index) {
+              final parking = _filteredParkingList[index];
+              final plate = parking['license_plate'] ?? '';
+              final name = parking['registered_vehicles']?['owner_name'] ?? '';
+              final companyName =
+                  parking['registered_vehicles']?['company'] ?? '';
+              final companyFloor =
+                  parking['registered_vehicles']?['floor_number'] ?? '';
+              final phone =
+                  parking['registered_vehicles']?['phone_number'] ?? '';
+              final timeIn = parking['entry_time'] ?? '';
 
-                        return Card(
-                          margin: const EdgeInsets.symmetric(vertical: 8),
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      "Biển số: $plate",
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Text("Tên: $name", style: const TextStyle(fontSize: 16)),
-                                const SizedBox(height: 4),
-                                Text("Công ty: $companyName, Tầng: $companyFloor", style: const TextStyle(fontSize: 16)),
-                                const SizedBox(height: 4),
-                                Text("SĐT: $phone", style: const TextStyle(fontSize: 16)),
-                                const SizedBox(height: 4),
-                                Text("Thời gian vào: ${_formatTime("$timeIn")}", style: const TextStyle(fontSize: 16)),
-                              ],
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Biển số: ${formatLicensePlate(plate)}",
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        );
-                      },
-                    ),
-                  );
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text("Tên: $name", style: const TextStyle(fontSize: 16)),
+                      const SizedBox(height: 4),
+                      Text(
+                        "Công ty: $companyName, Tầng: $companyFloor",
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      const SizedBox(height: 4),
+                      Text("SĐT: $phone", style: const TextStyle(fontSize: 16)),
+                      const SizedBox(height: 4),
+                      Text(
+                        "Thời gian vào: ${_formatTime("$timeIn")}",
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
   }
 }
