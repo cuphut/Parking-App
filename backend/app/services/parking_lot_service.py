@@ -128,3 +128,23 @@ class ParkingLotService:
             ParkingLot.license_plate == license_plate,
             ParkingLot.exit_time == None
         ).first()
+
+    @staticmethod
+    def delete_parking(db: Session, license_plate: str) -> None:
+        """
+        Xóa phương tiện theo biển số.
+
+        Args:
+            db: SQLAlchemy session
+            license_plate: Biển số phương tiện cần xóa
+
+        Raises:
+            ValueError: Nếu phương tiện không tồn tại
+        """
+
+        db_vehicle = db.query(ParkingLot).filter(ParkingLot.license_plate == license_plate).first()
+        if not db_vehicle:
+            raise ValueError("Vehicle not found")
+
+        db.delete(db_vehicle)
+        db.commit()

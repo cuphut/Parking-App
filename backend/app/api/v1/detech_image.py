@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File,Depends
+from fastapi import APIRouter, UploadFile, File, Depends
 from fastapi.responses import JSONResponse
 from function.detect import detect_license_plates
 from sqlalchemy.orm import Session
@@ -19,26 +19,28 @@ async def upload_image(
     image_bytes = await file.read()
     result = detect_license_plates(image_bytes)
 
+    response_results = []
     for plate_data in result:
+        plate_data_copy = plate_data.copy()  # Create a copy to avoid modifying original
         if plate_data.get("valid"):
             plate = plate_data["plate"]
             clean_plate = plate.replace("-", "").replace(" ", "")
             try:
-                # Kiểm tra xem có bản ghi entry chưa exit không
+                # Check if there's an active parking record
                 active_parking = ParkingLotService.get_active_parking_by_plate(db, clean_plate)
                 if active_parking:
-                    # Cập nhật exit_time cho bản ghi đó
+                    # Update exit_time for the record
                     ParkingLotService.update_exit_time(db, active_parking.id)
+                    plate_data_copy["operation"] = "exit"
                 else:
-                    # Tạo mới bản ghi entry_time
+                    # Create new entry_time record
                     parking_data = ParkingLotCreate(license_plate=clean_plate)
                     ParkingLotService.create_parking_lot(db, parking_data)
+                    plate_data_copy["operation"] = "entry"
             except ValueError:
-                # Có thể log lỗi hoặc bỏ qua
-                pass
+                plate_data_copy["operation"] = "error"
+        else:
+            plate_data_copy["operation"] = "invalid"
+        response_results.append(plate_data_copy)
 
-    return {"results": result}
-
-
-
-
+    return {"results": response_results}

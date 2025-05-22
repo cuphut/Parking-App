@@ -71,7 +71,7 @@ class _DetectionScreenState extends State<DetectionScreen> {
   Widget _buildResultWidget() {
     // Parse JSON string thành List<dynamic>
     final List<dynamic> results = json.decode(_resultText!);
-
+    
     return Column(
       children: [
         ListView.builder(
@@ -88,8 +88,8 @@ class _DetectionScreenState extends State<DetectionScreen> {
             final phone = item['phone'] ?? '';
 
             String cleanPlate = item['plate'].replaceAll('-', '').replaceAll(' ', '');
-            
-            final imageName = '${cleanPlate}.jpg'; // hoặc theo logic của bạn
+            final operation = item['operation'] ?? 'invalid';
+            final imageName = '$cleanPlate.jpg'; // hoặc theo logic của bạn
             final baseUrl = dotenv.env['BASE_URL'] ?? 'http://default-url.com';
             final imageUrl =
                 '$baseUrl/uploads/vehicles/$imageName';
@@ -114,6 +114,30 @@ class _DetectionScreenState extends State<DetectionScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     if(valid) ...[
+                      if(operation == 'entry') ...[
+                          Text(
+                          "Xe vào bãi",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 6),
+                      ],
+                      if(operation == 'exit') ...[
+                          Text(
+                          "Xe ra bãi",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 6),
+                      ],
                     Padding(
                       padding: const EdgeInsets.only(bottom: 20),
                       child: ClipRRect(

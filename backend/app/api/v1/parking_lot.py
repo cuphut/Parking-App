@@ -78,3 +78,24 @@ def set_exit_time(parking_id: int, db: Session = Depends(get_db)):
         return ParkingLotService.update_exit_time(db, parking_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    
+@router.delete("/{license_plate}")
+def delete_parking(license_plate: str, db: Session = Depends(get_db)):
+    """
+    Xóa phương tiện theo biển số.
+
+    Args:
+        license_plate: Biển số phương tiện cần xóa.
+        db: SQLAlchemy session.
+
+    Returns:
+        dict: Thông báo xóa thành công.
+
+    Raises:
+        HTTPException: Nếu phương tiện không tồn tại (status code 404).
+    """
+    try:
+        ParkingLotService.delete_parking(db, license_plate)
+        return {"message": "Vehicle deleted successfully"}
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))

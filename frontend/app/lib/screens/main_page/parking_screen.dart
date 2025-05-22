@@ -71,19 +71,27 @@ class _ParkingScreenState extends State<ParkingScreen> {
   }
 
   void _filterParkingList() {
-    final query = widget.searchQuery.toLowerCase();
-    setState(() {
-      _filteredParkingList =
-          _parkingList.where((parking) {
-            final plate = (parking['license_plate'] ?? '').toLowerCase();
-            final timeOut = parking['exit_time'];
-            final isStillParked = timeOut == null || timeOut.toString().isEmpty;
+  final query = widget.searchQuery.toLowerCase();
+  final now = DateTime.now();
+  final todayStart = DateTime(now.year, now.month, now.day);
+  final todayEnd = todayStart.add(const Duration(days: 1));
 
-            final matchesQuery = query.isEmpty || plate.contains(query);
-            return isStillParked && matchesQuery;
-          }).toList();
-    });
-  }
+  setState(() {
+    _filteredParkingList = _parkingList.where((parking) {
+      final plate = (parking['license_plate'] ?? '').toLowerCase();
+      final timeInStr = parking['entry_time'];
+
+      // Tìm kiếm biển số
+      final matchesQuery = query.isEmpty || plate.contains(query);
+
+      // Chỉ lấy xe vào trong ngày hôm nay
+      final timeIn = DateTime.tryParse(timeInStr ?? '');
+      final isToday = timeIn != null && timeIn.isAfter(todayStart) && timeIn.isBefore(todayEnd);
+
+      return matchesQuery && isToday;
+    }).toList();
+  });
+}
 
   String _formatTime(String? timeStr) {
     if (timeStr == null) return '---';
