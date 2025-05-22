@@ -20,7 +20,7 @@ class _DetectionScreenState extends State<DetectionScreen> {
   bool _isLoading = false;
 
   Future<void> _pickAndUploadImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
     if (image == null) return;
 
     setState(() {
@@ -59,9 +59,7 @@ class _DetectionScreenState extends State<DetectionScreen> {
       floatingActionButton: RawMaterialButton(
         onPressed: _pickAndUploadImage,
         fillColor: Colors.blueAccent,
-        shape: const CircleBorder(
-          side: BorderSide(color: Colors.blueAccent),
-        ),
+        shape: const CircleBorder(side: BorderSide(color: Colors.blueAccent)),
         constraints: const BoxConstraints.tightFor(width: 70, height: 70),
         child: const Icon(Icons.camera_alt, size: 36, color: Colors.white),
       ),
@@ -71,7 +69,7 @@ class _DetectionScreenState extends State<DetectionScreen> {
   Widget _buildResultWidget() {
     // Parse JSON string thành List<dynamic>
     final List<dynamic> results = json.decode(_resultText!);
-    
+
     return Column(
       children: [
         ListView.builder(
@@ -87,12 +85,13 @@ class _DetectionScreenState extends State<DetectionScreen> {
             final companyFloor = item['companyFloor'] ?? '';
             final phone = item['phone'] ?? '';
 
-            String cleanPlate = item['plate'].replaceAll('-', '').replaceAll(' ', '');
+            String cleanPlate = item['plate']
+                .replaceAll('-', '')
+                .replaceAll(' ', '');
             final operation = item['operation'] ?? 'invalid';
             final imageName = '$cleanPlate.jpg'; // hoặc theo logic của bạn
             final baseUrl = dotenv.env['BASE_URL'] ?? 'http://default-url.com';
-            final imageUrl =
-                '$baseUrl/uploads/vehicles/$imageName';
+            final imageUrl = '$baseUrl/uploads/vehicles/$imageName';
             return Card(
               margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
               elevation: 4,
@@ -113,9 +112,9 @@ class _DetectionScreenState extends State<DetectionScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    if(valid) ...[
-                      if(operation == 'entry') ...[
-                          Text(
+                    if (valid) ...[
+                      if (operation == 'entry') ...[
+                        Text(
                           "Xe vào bãi",
                           style: const TextStyle(
                             color: Colors.white,
@@ -126,8 +125,8 @@ class _DetectionScreenState extends State<DetectionScreen> {
                         ),
                         const SizedBox(height: 6),
                       ],
-                      if(operation == 'exit') ...[
-                          Text(
+                      if (operation == 'exit') ...[
+                        Text(
                           "Xe ra bãi",
                           style: const TextStyle(
                             color: Colors.white,
@@ -138,18 +137,19 @@ class _DetectionScreenState extends State<DetectionScreen> {
                         ),
                         const SizedBox(height: 6),
                       ],
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 20),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          imageUrl,
-                          height: 150,
-                          width: 150,
-                          fit: BoxFit.cover,
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 20),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            imageUrl,
+                            height: 150,
+                            width: 150,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
-                    )],
+                    ],
                     Text(
                       "Biển số $plate",
                       style: const TextStyle(

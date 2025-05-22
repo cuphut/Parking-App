@@ -16,7 +16,8 @@ class _ParkingListScreenState extends State<ParkingListScreen> {
   final TextEditingController _searchController = TextEditingController();
   bool _isSearching = false;
   DateTime? _selectedDate;
-
+  String? _selectedCompany;
+  List<String> _companyList = [];
   final DateFormat _dateFormat = DateFormat('dd/MM/yyyy HH:mm');
 
   @override
@@ -35,6 +36,20 @@ class _ParkingListScreenState extends State<ParkingListScreen> {
         _isSearching = false;
         _searchController.clear();
         _selectedDate = null;
+        _selectedCompany = null;
+
+        // Trích danh sách công ty duy nhất
+        final companies =
+            list
+                .map<String?>(
+                  (item) => item['registered_vehicles']?['company'] as String?,
+                )
+                .whereType<String>()
+                .toSet()
+                .toList();
+
+        companies.sort(); // sắp xếp cho gọn
+        _companyList = companies;
       });
     });
   }
@@ -58,6 +73,7 @@ class _ParkingListScreenState extends State<ParkingListScreen> {
                 item['entry_time'] != null
                     ? DateTime.tryParse(item['entry_time'])
                     : null;
+            final company = item['registered_vehicles']?['company'] ?? '';
 
             final matchesPlate = query.isEmpty || plate.contains(query);
             final matchesDate =
@@ -66,8 +82,10 @@ class _ParkingListScreenState extends State<ParkingListScreen> {
                     timeIn.year == _selectedDate!.year &&
                     timeIn.month == _selectedDate!.month &&
                     timeIn.day == _selectedDate!.day);
+            final matchesCompany =
+                _selectedCompany == null || _selectedCompany == company;
 
-            return matchesPlate && matchesDate;
+            return matchesPlate && matchesDate && matchesCompany;
           }).toList();
     });
   }
@@ -268,74 +286,226 @@ class _ParkingListScreenState extends State<ParkingListScreen> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: FutureBuilder<List<dynamic>>(
-          future: _parkingListFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Lỗi: ${snapshot.error}',
-                      style: const TextStyle(fontSize: 16, color: Colors.red),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _fetchParkingList,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                      ),
-                      child: const Text(
-                        'Thử lại',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+      body: Column(
+        children: [
+          if (_companyList.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+              child: GestureDetector(
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(16),
                       ),
                     ),
-                  ],
-                ),
-              );
-            } else if (_filteredList.isEmpty) {
-              return const Center(
-                child: Text(
-                  'Không tìm thấy kết quả phù hợp.',
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
-                ),
-              );
-            }
-
-            return RefreshIndicator(
-              onRefresh: () async {
-                _fetchParkingList();
-                await _parkingListFuture;
-              },
-              child: ListView.builder(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 20.0,
-                ),
-                itemCount: _filteredList.length,
-                itemBuilder: (context, index) {
-                  return _buildListItem(_filteredList[index]);
+                    backgroundColor: Colors.white,
+                    isScrollControlled: true, // Cho phép cuộn nếu danh sách dài
+                    builder: (context) {
+                      return Container(
+                        height:
+                            MediaQuery.of(context).size.height *
+                            0.5, // Chiếm 50% chiều cao màn hình
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Tiêu đề của bottom sheet
+                            Text(
+                              'Chọn công ty',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.blueAccent,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            // Danh sách công ty
+                            Expanded(
+                              child: ListView(
+                                children: [
+                                  ListTile(
+                                    title: Text(
+                                      'Tất cả công ty',
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedCompany = null;
+                                      });
+                                      _filterList();
+                                      Navigator.pop(context);
+                                    },
+                                    tileColor:
+                                        _selectedCompany == null
+                                            ? Colors.grey[200]
+                                            : null,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  ..._companyList.map((company) {
+                                    return ListTile(
+                                      title: Text(
+                                        company,
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedCompany = company;
+                                        });
+                                        _filterList();
+                                        Navigator.pop(context);
+                                      },
+                                      tileColor:
+                                          _selectedCompany == company
+                                              ? Colors.grey[200]
+                                              : null,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
                 },
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: 'Chọn công ty',
+                    labelStyle: TextStyle(
+                      color: Colors.blueAccent,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[100],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: Colors.blueAccent,
+                        width: 1.5,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: Colors.grey[400]!,
+                        width: 1.5,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: Colors.blueAccent,
+                        width: 2,
+                      ),
+                    ),
+                    prefixIcon: Icon(
+                      Icons.business,
+                      color: Colors.blueAccent,
+                      semanticLabel: 'Công ty',
+                    ),
+                    suffixIcon: Icon(
+                      Icons.arrow_drop_down,
+                      color: Colors.blueAccent,
+                      size: 30,
+                    ),
+                  ),
+                  child: Text(
+                    _selectedCompany ?? 'Tất cả công ty',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
               ),
-            );
-          },
-        ),
+            ),
+          Expanded(
+            child: FutureBuilder(
+              future: _parkingListFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Lỗi: ${snapshot.error}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.red,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _fetchParkingList,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blueAccent,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                          ),
+                          child: const Text(
+                            'Thử lại',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                } else if (_filteredList.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'Không tìm thấy kết quả phù hợp.',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                  );
+                }
+
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    _fetchParkingList();
+                    await _parkingListFuture;
+                  },
+                  child: ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 20.0,
+                    ),
+                    itemCount: _filteredList.length,
+                    itemBuilder: (context, index) {
+                      return _buildListItem(_filteredList[index]);
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

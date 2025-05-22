@@ -8,7 +8,11 @@ class VehicleDetailScreen extends StatefulWidget {
   final String plate;
   final bool role;
 
-  const VehicleDetailScreen({required this.plate, required this.role, super.key});
+  const VehicleDetailScreen({
+    required this.plate,
+    required this.role,
+    super.key,
+  });
 
   @override
   State<VehicleDetailScreen> createState() => _VehicleDetailScreenState();
@@ -38,10 +42,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
       appBar: AppBar(
         title: const Text(
           'Chi tiết phương tiện',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 20,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
         ),
         centerTitle: true,
         elevation: 0,
@@ -55,9 +56,19 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             } else if (snapshot.hasError) {
-              return Center(child: Text('Lỗi: ${snapshot.error}', style: const TextStyle(fontSize: 16)));
+              return Center(
+                child: Text(
+                  'Lỗi: ${snapshot.error}',
+                  style: const TextStyle(fontSize: 16),
+                ),
+              );
             } else if (!snapshot.hasData) {
-              return const Center(child: Text('Không tìm thấy thông tin phương tiện.', style: TextStyle(fontSize: 16)));
+              return const Center(
+                child: Text(
+                  'Không tìm thấy thông tin phương tiện.',
+                  style: TextStyle(fontSize: 16),
+                ),
+              );
             }
 
             final vehicle = snapshot.data!;
@@ -66,7 +77,10 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
             final imageUrl = '$baseUrl/uploads/vehicles/$imageName';
 
             return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 20.0,
+              ),
               child: Card(
                 elevation: 4,
                 shape: RoundedRectangleBorder(
@@ -84,7 +98,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
                           borderRadius: BorderRadius.circular(10),
                           child: Image.network(
                             imageUrl,
-                            height: 250,
+                            height: 200,
                             width: double.infinity,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
@@ -148,43 +162,45 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
           },
         ),
       ),
-      floatingActionButton: widget.role
-          ? Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                FloatingActionButton(
-                  heroTag: 'editBtn',
-                  onPressed: _handleEdit,
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+      floatingActionButton:
+          widget.role
+              ? Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  FloatingActionButton(
+                    heroTag: 'editBtn',
+                    onPressed: _handleEdit,
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.edit, semanticLabel: 'Chỉnh sửa'),
                   ),
-                  child: const Icon(Icons.edit, semanticLabel: 'Chỉnh sửa'),
-                ),
-                const SizedBox(width: 16),
-                FloatingActionButton(
-                  heroTag: 'deleteBtn',
-                  onPressed: _isDeleting ? null : _handleDelete,
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  const SizedBox(width: 16),
+                  FloatingActionButton(
+                    heroTag: 'deleteBtn',
+                    onPressed: _isDeleting ? null : _handleDelete,
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child:
+                        _isDeleting
+                            ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                            : const Icon(Icons.delete, semanticLabel: 'Xoá'),
                   ),
-                  child: _isDeleting
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Icon(Icons.delete, semanticLabel: 'Xoá'),
-                ),
-              ],
-            )
-          : null,
+                ],
+              )
+              : null,
     );
   }
 
@@ -196,12 +212,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          color: Colors.blueAccent,
-          size: 24,
-          semanticLabel: label,
-        ),
+        Icon(icon, color: Colors.blueAccent, size: 24, semanticLabel: label),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -233,71 +244,72 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
   void _handleDelete() async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 4,
-        title: Row(
-          children: [
-            const Icon(
-              Icons.warning,
-              color: Colors.red,
-              size: 28,
-              semanticLabel: 'Cảnh báo',
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-            const SizedBox(width: 8),
-            const Text(
-              'Xác nhận xoá',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: Colors.red,
-              ),
+            backgroundColor: Colors.white,
+            elevation: 4,
+            title: Row(
+              children: [
+                const Icon(
+                  Icons.warning,
+                  color: Colors.red,
+                  size: 28,
+                  semanticLabel: 'Cảnh báo',
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Xác nhận xoá',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.red,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-        content: const Text(
-          'Bạn có chắc chắn muốn xoá phương tiện này? Hành động này không thể hoàn tác.',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-            color: Colors.black87,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text(
-              'Huỷ',
+            content: const Text(
+              'Bạn có chắc chắn muốn xoá phương tiện này? Hành động này không thể hoàn tác.',
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey,
+                fontWeight: FontWeight.w400,
+                color: Colors.black87,
               ),
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text(
+                  'Huỷ',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+                child: const Text(
+                  'Xoá',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-            child: const Text(
-              'Xoá',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
 
     if (confirm == true) {
@@ -312,11 +324,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
           SnackBar(
             content: Row(
               children: [
-                const Icon(
-                  Icons.delete_forever,
-                  color: Colors.white,
-                  size: 24,
-                ),
+                const Icon(Icons.delete_forever, color: Colors.white, size: 24),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -347,11 +355,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
           SnackBar(
             content: Row(
               children: [
-                const Icon(
-                  Icons.error,
-                  color: Colors.white,
-                  size: 24,
-                ),
+                const Icon(Icons.error, color: Colors.white, size: 24),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(

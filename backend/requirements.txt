@@ -2,8 +2,8 @@ opencv-python==4.11.0.86
 matplotlib
 numpy==1.26.4
 pillow==11.2.1
-torch==2.0.1
-torchvision==0.15.2
+torch==2.2.1
+torchvision==0.17.1
 tqdm==4.67.1
 PyYAML==6.0.2
 requests==2.32.3
@@ -19,3 +19,4 @@ sqlalchemy
 passlib
 pydantic-settings
 psycopg2
+bcrypt
