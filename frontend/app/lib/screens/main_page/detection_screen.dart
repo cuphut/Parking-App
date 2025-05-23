@@ -20,7 +20,7 @@ class _DetectionScreenState extends State<DetectionScreen> {
   bool _isLoading = false;
 
   Future<void> _pickAndUploadImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image == null) return;
 
     setState(() {
@@ -92,118 +92,106 @@ class _DetectionScreenState extends State<DetectionScreen> {
             final imageName = '$cleanPlate.jpg'; // hoặc theo logic của bạn
             final baseUrl = dotenv.env['BASE_URL'] ?? 'http://default-url.com';
             final imageUrl = '$baseUrl/uploads/vehicles/$imageName';
-            return Card(
-              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              color:
-                  valid
-                      ? Colors.green
-                      : const Color.fromARGB(
-                        255,
-                        255,
-                        90,
-                        78,
-                      ), // Màu nền khác nhau cho hợp lệ/không hợp lệ
-              child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    if (valid) ...[
-                      if (operation == 'entry') ...[
+
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              margin: const EdgeInsets.symmetric(vertical: 8),
+
+              child: Card(
+                elevation: 6,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+
+                color:
+                    valid
+                        ? Colors.green[600]
+                        : Colors
+                            .red[600], // Màu nền khác nhau cho hợp lệ/không hợp lệ
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      if (valid) ...[
                         Text(
-                          "Xe vào bãi",
+                          operation == 'entry' ? 'Xe vào bãi' : 'Xe ra bãi',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 20,
+                            fontSize: 22,
                             fontWeight: FontWeight.bold,
                           ),
-                          textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 12),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 20),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              imageUrl,
+                              height: 150,
+                              width: 150,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
                       ],
-                      if (operation == 'exit') ...[
+                      Text(
+                        "Biển số $plate",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      if (message.isNotEmpty && !valid) ...[
+                        const SizedBox(height: 8),
                         Text(
-                          "Xe ra bãi",
+                          message.toLowerCase(),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w700,
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 6),
                       ],
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 20),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.network(
-                            imageUrl,
-                            height: 150,
-                            width: 150,
-                            fit: BoxFit.cover,
+                      if (valid) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          "Tên: $name",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
                           ),
+                          textAlign: TextAlign.center,
                         ),
-                      ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "Công ty: $companyName, Tầng: $companyFloor",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "SĐT: $phone",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ],
-                    Text(
-                      "Biển số $plate",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    if (message.isNotEmpty && !valid) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        message.toLowerCase(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                    if (valid) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        "Tên: $name",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "Công ty: $companyName, Tầng: $companyFloor",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "SĐT: $phone",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ],
+                  ),
                 ),
               ),
             );
