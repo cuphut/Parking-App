@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../models/vehicle_info.dart';
 import '../../services/vehicle_service.dart';
 
@@ -21,7 +22,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   bool _isLoading = false;
 
   Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    final pickedFile = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+    );
     if (pickedFile != null) {
       setState(() {
         _selectedImage = File(pickedFile.path);
@@ -29,51 +32,98 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     }
   }
 
-  Future<void> _submitVehicle() async {
-  if (_formKey.currentState!.validate()) {
-    if (_selectedImage == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Vui lòng chọn ảnh phương tiện'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          duration: Duration(seconds: 3),
-          margin: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        ),
-      );
-      return;
-    }
-
-    final vehicle = VehicleInfo(
-      licensePlate: _plateController.text,
-      ownerName: _nameController.text,
-      company: _companyNameController.text,
-      floor_number: int.tryParse(_companyFloorController.text) ?? 0,
-      phoneNumber: _phoneController.text,
-      image: '', // server sẽ nhận ảnh từ multipart nên chuỗi rỗng là ổn
+  Future<void> _pickExcelFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['xls', 'xlsx'],
     );
 
-    try {
-      bool vehicleExists = await _vehicleService.checkVehicleExists(vehicle.licensePlate);
-      if (vehicleExists) {
+    if (result != null && result.files.single.path != null) {
+      File file = File(result.files.single.path!);
+
+      try {
+        setState(() {
+          _isLoading = true;
+        });
+        final response = await _vehicleService.uploadExcelFile(file);
+        final message = response['message'] ?? 'Tải file Excel thành công';
+        if (response['status'] == 'error') {
+          throw Exception(response['message'] ?? 'Lỗi xử lý file Excel');
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
               children: [
-                Icon(Icons.warning, color: Colors.white, size: 24),
+                Icon(Icons.check_circle, color: Colors.white, size: 24),
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Không thành công: Biển số đã tồn tại',
-                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
+                    message,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ],
             ),
-            backgroundColor: Colors.orange,
+            backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            duration: Duration(seconds: 3),
+            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          ),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.error, color: Colors.white, size: 24),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Lỗi: $e',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            duration: Duration(seconds: 5),
+            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          ),
+        );
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _submitVehicle() async {
+    if (_formKey.currentState!.validate()) {
+      if (_selectedImage == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Vui lòng chọn ảnh phương tiện'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
             duration: Duration(seconds: 3),
             margin: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           ),
@@ -81,55 +131,116 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
         return;
       }
 
-      final response = await _vehicleService.addVehicle(vehicle, _selectedImage!);
-      final message = response['message'] as String? ?? 'Phương tiện đã được thêm thành công';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.white, size: 24),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  message,
-                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          duration: Duration(seconds: 3),
-          margin: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        ),
+      final vehicle = VehicleInfo(
+        licensePlate: _plateController.text,
+        ownerName: _nameController.text,
+        company: _companyNameController.text,
+        floor_number: int.tryParse(_companyFloorController.text) ?? 0,
+        phoneNumber: _phoneController.text,
+        image: '', // server will handle image path
       );
-      Navigator.pop(context);
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.error, color: Colors.white, size: 24),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Lỗi: $e',
-                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
-                ),
+
+      try {
+        bool vehicleExists = await _vehicleService.checkVehicleExists(
+          vehicle.licensePlate,
+        );
+        if (vehicleExists) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.warning, color: Colors.white, size: 24),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Không thành công: Biển số đã tồn tại',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+              backgroundColor: Colors.orange,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              duration: Duration(seconds: 3),
+              margin: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            ),
+          );
+          return;
+        }
+
+        final response = await _vehicleService.addVehicle(
+          vehicle,
+          _selectedImage!,
+        );
+        final message =
+            response['message'] as String? ??
+            'Phương tiện đã được thêm thành công';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white, size: 24),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            duration: Duration(seconds: 3),
+            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           ),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          duration: Duration(seconds: 3),
-          margin: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        ),
-      );
+        );
+        Navigator.pop(context);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.error, color: Colors.white, size: 24),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Lỗi: $e',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            duration: Duration(seconds: 3),
+            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          ),
+        );
+      }
     }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -137,16 +248,19 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       appBar: AppBar(
         title: const Text(
           'Thêm phương tiện',
-          
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 20,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
         ),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.upload_file),
+            tooltip: 'Tải file Excel',
+            onPressed: _pickExcelFile,
+          ),
+        ],
       ),
       body: SafeArea(
         child: Padding(
@@ -287,7 +401,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                               ),
                             ),
                           ),
@@ -300,7 +416,10 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                                     _selectedImage = null;
                                   });
                                 },
-                                icon: const Icon(Icons.delete, color: Colors.red),
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
                               ),
                             ),
                         ],
@@ -333,7 +452,10 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                           child: const Center(
                             child: Text(
                               'Chưa chọn ảnh',
-                              style: TextStyle(color: Colors.grey, fontSize: 16),
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 16,
+                              ),
                             ),
                           ),
                         ),
@@ -342,15 +464,18 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: _isLoading ? null : () async {
-                            setState(() {
-                              _isLoading = true;
-                            });
-                            await _submitVehicle();
-                            setState(() {
-                              _isLoading = false;
-                            });
-                          },
+                          onPressed:
+                              _isLoading
+                                  ? null
+                                  : () async {
+                                    setState(() {
+                                      _isLoading = true;
+                                    });
+                                    await _submitVehicle();
+                                    setState(() {
+                                      _isLoading = false;
+                                    });
+                                  },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.blueAccent,
                             foregroundColor: Colors.white,
@@ -360,23 +485,23 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                             ),
                             elevation: 2,
                           ),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  height: 24,
-                                  width: 24,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
+                          child:
+                              _isLoading
+                                  ? const SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                  : const Text(
+                                    'Thêm phương tiện',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
-                                )
-                              : const Text(
-                                  'Thêm phương tiện',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  
-                                ),
                         ),
                       ),
                     ],
@@ -400,4 +525,3 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     super.dispose();
   }
 }
-

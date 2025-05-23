@@ -10,7 +10,9 @@ class VehicleService {
 
   Future<bool> checkVehicleExists(String licensePlate) async {
     String cleanPlate = licensePlate.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
-    final response = await http.get(Uri.parse('$baseUrl/registered_vehicle/$cleanPlate'));
+    final response = await http.get(
+      Uri.parse('$baseUrl/registered_vehicle/$cleanPlate'),
+    );
 
     if (response.statusCode == 200) {
       // Biển số tồn tại
@@ -23,9 +25,15 @@ class VehicleService {
     }
   }
 
-  Future<Map<String, dynamic>> addVehicle(VehicleInfo vehicle, File imageFile) async {
-    var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/registered_vehicle/'));
-    
+  Future<Map<String, dynamic>> addVehicle(
+    VehicleInfo vehicle,
+    File imageFile,
+  ) async {
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/registered_vehicle/'),
+    );
+
     request.fields['license_plate'] = vehicle.licensePlate;
     request.fields['owner_name'] = vehicle.ownerName;
     request.fields['company'] = vehicle.company;
@@ -48,7 +56,23 @@ class VehicleService {
     if (response.statusCode == 200 || response.statusCode == 201) {
       return jsonDecode(responseBody);
     } else {
-      throw Exception(jsonDecode(responseBody)['detail'] ?? 'Lỗi thêm phương tiện');
+      throw Exception(
+        jsonDecode(responseBody)['detail'] ?? 'Lỗi thêm phương tiện',
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>> uploadExcelFile(File file) async {
+    final uri = Uri.parse('$baseUrl/registered_vehicle/import_excel');
+    var request = http.MultipartRequest('POST', uri);
+    request.files.add(await http.MultipartFile.fromPath('file', file.path));
+
+    final response = await request.send();
+    final responseBody = await response.stream.bytesToString();
+    if (response.statusCode == 200) {
+      return jsonDecode(responseBody);
+    } else {
+      throw jsonDecode(responseBody)['detail'] ?? 'Lỗi không xác định';
     }
   }
 
@@ -90,7 +114,9 @@ class VehicleService {
   }
 
   Future<Map<String, dynamic>> updateVehicle(VehicleInfo vehicle) async {
-    final url = Uri.parse('$baseUrl/registered_vehicle/${vehicle.licensePlate}');
+    final url = Uri.parse(
+      '$baseUrl/registered_vehicle/${vehicle.licensePlate}',
+    );
     final response = await http.put(
       url,
       headers: {'Content-Type': 'application/json'},

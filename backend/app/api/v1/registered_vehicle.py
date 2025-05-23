@@ -4,6 +4,7 @@ from app.db.session import get_db
 from app.schemas.registered_vehicle import VehicleCreate, VehicleResponse
 from app.services.registered_vehicle_service import VehicleService
 
+
 router = APIRouter(prefix="/registered_vehicle", tags=["registered_vehicle"])
 
 @router.post("/", response_model=VehicleResponse)
@@ -25,6 +26,15 @@ def create_vehicle(vehicle: VehicleCreate = Depends(VehicleCreate.as_form), imag
         return VehicleService.create_vehicle(db, vehicle,image)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/import_excel")
+async def import_vehicles_excel(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    try:
+        contents = await file.read()
+        return VehicleService.import_vehicles_excel(contents, db)
+    except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
 
 @router.get("/vehicles", response_model=list[VehicleResponse])
 def get_all_vehicles(db: Session = Depends(get_db)):
