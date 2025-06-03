@@ -264,7 +264,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+          padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 6.0),
           child: Form(
             key: _formKey,
             child: SingleChildScrollView(
@@ -297,7 +297,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 14),
                       // Owner Name
                       TextFormField(
                         controller: _nameController,
@@ -317,7 +317,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 14),
                       // Company Name
                       TextFormField(
                         controller: _companyNameController,
@@ -337,7 +337,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 14),
                       // Company Floor
                       TextFormField(
                         controller: _companyFloorController,
@@ -358,7 +358,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 14),
                       // Phone Number
                       TextFormField(
                         controller: _phoneController,
@@ -385,7 +385,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
                       // Image Picker
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -424,7 +424,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                             ),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 14),
                       // Image Preview
                       if (_selectedImage != null)
                         ClipRRect(
@@ -433,7 +433,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                             children: [
                               Image.file(
                                 _selectedImage!,
-                                height: 200,
+                                height: 240,
                                 width: double.infinity,
                                 fit: BoxFit.cover,
                               ),
@@ -459,7 +459,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                             ),
                           ),
                         ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
                       // Submit Button
                       SizedBox(
                         width: double.infinity,

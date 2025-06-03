@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '/services/detect_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:app/screens/vehicle_page/view_details_vehicles_screen.dart'; // Import your existing VehicleDetailScreen
 
 class DetectionScreen extends StatefulWidget {
   const DetectionScreen({super.key});
@@ -14,7 +15,7 @@ class DetectionScreen extends StatefulWidget {
 
 class _DetectionScreenState extends State<DetectionScreen> {
   final ImagePicker _picker = ImagePicker();
-  final DetectService _vehicleService = DetectService(); // Khởi tạo service
+  final DetectService _vehicleService = DetectService();
 
   String? _resultText;
   bool _isLoading = false;
@@ -67,7 +68,6 @@ class _DetectionScreenState extends State<DetectionScreen> {
   }
 
   Widget _buildResultWidget() {
-    // Parse JSON string thành List<dynamic>
     final List<dynamic> results = json.decode(_resultText!);
 
     return Column(
@@ -89,108 +89,120 @@ class _DetectionScreenState extends State<DetectionScreen> {
                 .replaceAll('-', '')
                 .replaceAll(' ', '');
             final operation = item['operation'] ?? 'invalid';
-            final imageName = '$cleanPlate.jpg'; // hoặc theo logic của bạn
+            final imageName = '$cleanPlate.jpg';
             final baseUrl = dotenv.env['BASE_URL'] ?? 'http://default-url.com';
             final imageUrl = '$baseUrl/uploads/vehicles/$imageName';
 
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-              margin: const EdgeInsets.symmetric(vertical: 8),
-
-              child: Card(
-                elevation: 6,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-
-                color:
-                    valid
-                        ? Colors.green[600]
-                        : Colors
-                            .red[600], // Màu nền khác nhau cho hợp lệ/không hợp lệ
-                child: Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      if (valid) ...[
-                        Text(
-                          operation == 'entry' ? 'Xe vào bãi' : 'Xe ra bãi',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
+            return GestureDetector(
+              onTap:
+                  valid
+                      ? () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => VehicleDetailScreen(
+                                  plate:
+                                      cleanPlate, // Pass cleaned plate to match VehicleInfo
+                                  role: true, // Adjust based on your auth logic
+                                ),
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 20),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.network(
-                              imageUrl,
-                              height: 150,
-                              width: 150,
-                              fit: BoxFit.cover,
+                        );
+                      }
+                      : null,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                child: Card(
+                  elevation: 6,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  color: valid ? Colors.green[600] : Colors.red[600],
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        if (valid) ...[
+                          Text(
+                            operation == 'entry' ? 'Xe vào bãi' : 'Xe ra bãi',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
+                          const SizedBox(height: 12),
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 20),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.network(
+                                imageUrl,
+                                height: 150,
+                                width: 150,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                        ],
+                        Text(
+                          "Biển số $plate",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
+                        if (message.isNotEmpty && !valid) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            message.toLowerCase(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                        if (valid) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            "Tên: $name",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "Công ty: $companyName, Tầng: $companyFloor",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "SĐT: $phone",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                       ],
-                      Text(
-                        "Biển số $plate",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      if (message.isNotEmpty && !valid) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          message.toLowerCase(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                      if (valid) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          "Tên: $name",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "Công ty: $companyName, Tầng: $companyFloor",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "SĐT: $phone",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ],
+                    ),
                   ),
                 ),
               ),

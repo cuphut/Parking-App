@@ -98,8 +98,8 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
                           borderRadius: BorderRadius.circular(10),
                           child: Image.network(
                             imageUrl,
-                            height: 200,
-                            width: double.infinity,
+                            height: 260,
+                            width: 200,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
